@@ -1,0 +1,10 @@
+# Bytecode
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+
+# macOS sistem dosyaları
+.DS_Store
