@@ -56,4 +56,9 @@ class DynamicWire(QGraphicsLineItem):
         if self.pin2.connected_pin == self.pin1:
             self.pin2.connected_pin = None
 
+        main_window = self.scene().views()[0].window()
+        if hasattr(main_window, "history_stack"):
+            main_window.history_stack.append({"type": "remove", "item": self})
+            main_window.redo_stack.clear()
+
         self.scene().removeItem(self)

@@ -26,6 +26,11 @@ class ConnectionManager:
             wire = DynamicWire(self.first_pin, pin, self.current_color)
             self.scene.addItem(wire)
 
+            main_window = self.scene.views()[0].window()
+            if hasattr(main_window, "history_stack"):
+                main_window.history_stack.append({"type": "add", "item": wire})
+                main_window.redo_stack.clear()
+
             self.first_pin.connected_pin = pin
             pin.connected_pin = self.first_pin
 

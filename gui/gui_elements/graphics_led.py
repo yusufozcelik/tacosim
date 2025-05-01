@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
+from gui.gui_elements.graphics_battery import GraphicsBattery
 
 class GraphicsLED(QGraphicsRectItem):
     def __init__(self, x, y, connection_manager):
@@ -26,22 +27,20 @@ class GraphicsLED(QGraphicsRectItem):
                 return pin
         return None
 
-    def find_connected_source(self, start_pin, target_name, visited=None):
-        if start_pin is None:
+    def find_connected_source(self, pin, expected_name, visited=None):
+        if pin is None:
             return None
 
         if visited is None:
             visited = set()
-
-        if start_pin in visited:
+        if pin in visited:
             return None
-        visited.add(start_pin)
+        visited.add(pin)
 
-        # Eğer pinin ismi hedef isimse ve bu uç doğrudan bataryadaysa, kaynak bulundu
-        if start_pin.name == target_name and "Battery" in type(start_pin.parentItem()).__name__:
-            return start_pin
+        if pin.name == expected_name and isinstance(pin.parentItem(), GraphicsBattery):
+            return pin
 
-        connected = start_pin.connected_pin
+        connected = pin.connected_pin
         if connected is None:
             return None
 
@@ -49,12 +48,13 @@ class GraphicsLED(QGraphicsRectItem):
         if not hasattr(parent, "pins"):
             return None
 
-        for p in parent.pins:
-            if p is not connected:
+        for next_pin in parent.pins:
+            if next_pin is connected:
                 continue
-            result = self.find_connected_source(p, target_name, visited)
+            result = self.find_connected_source(next_pin, expected_name, visited)
             if result:
                 return result
+
         return None
 
     def simulate(self, running):
