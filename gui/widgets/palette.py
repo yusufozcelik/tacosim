@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QColorDialog
 
 class PaletteWidget(QWidget):
-    def __init__(self, on_led_add, on_color_change=None, on_battery_add=None, on_simulate=None):
+    def __init__(self, on_led_add, on_color_change=None, on_battery_add=None, on_simulate=None, on_resistor_add=None):
         super().__init__()
         self.on_color_change = on_color_change
 
@@ -14,7 +14,7 @@ class PaletteWidget(QWidget):
         self.btn_color = QPushButton("🔵 Kablo Rengi Seç")
         self.btn_color.clicked.connect(self.choose_color)
 
-        self.btn_simulate = QPushButton("▶️ Simülasyonu Başlat")
+        self.btn_simulate = QPushButton("Simülasyonu Başlat")
         self.btn_simulate.clicked.connect(on_simulate)
         layout.addWidget(self.btn_simulate)
 
@@ -22,6 +22,11 @@ class PaletteWidget(QWidget):
         if on_battery_add:
             self.btn_battery.clicked.connect(on_battery_add)
         layout.addWidget(self.btn_battery)
+
+        self.btn_resistor = QPushButton("🔸 Direnç Ekle")
+        if on_resistor_add:
+            self.btn_resistor.clicked.connect(on_resistor_add)
+        layout.addWidget(self.btn_resistor)
 
         layout.addWidget(self.btn_led)
         layout.addWidget(self.btn_color)

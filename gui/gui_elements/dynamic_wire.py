@@ -35,7 +35,7 @@ class DynamicWire(QGraphicsLineItem):
         menu = QMenu()
         
         delete_action = QAction("🗑️ Sil", menu)
-        delete_action.triggered.connect(lambda: self.scene().removeItem(self))
+        delete_action.triggered.connect(self.delete)
         menu.addAction(delete_action)
 
         color_action = QAction("🎨 Rengini Değiştir", menu)
@@ -49,3 +49,11 @@ class DynamicWire(QGraphicsLineItem):
         if color.isValid():
             self.pen = QPen(color, 2)
             self.setPen(self.pen)
+
+    def delete(self):
+        if self.pin1.connected_pin == self.pin2:
+            self.pin1.connected_pin = None
+        if self.pin2.connected_pin == self.pin1:
+            self.pin2.connected_pin = None
+
+        self.scene().removeItem(self)

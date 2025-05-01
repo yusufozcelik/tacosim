@@ -7,7 +7,7 @@ class GraphicsLED(QGraphicsRectItem):
     def __init__(self, x, y, connection_manager):
         super().__init__(QRectF(0, 0, 50, 30))
         self.setPos(x, y)
-        self.setBrush(QBrush(QColor("red")))
+        self.setBrush(QBrush(QColor("gray")))
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
 
@@ -20,19 +20,51 @@ class GraphicsLED(QGraphicsRectItem):
             SelectablePin(45, 10, connection_manager, self, name="GND")
         ]
 
-    def simulate(self):
-        pins = {p.name: p.connected_pin for p in self.pins}
+    def pins_by_name(self, name):
+        for pin in self.pins:
+            if pin.name == name:
+                return pin
+        return None
 
-        vcc = pins.get("VCC")
-        gnd = pins.get("GND")
+    def find_connected_source(self, pin, expected_name, visited=None):
+        if visited is None:
+            visited = set()
+        if pin in visited:
+            return None
+        visited.add(pin)
 
-        if not vcc or not gnd:
+        if pin.name == expected_name:
+            return pin
+
+        connected = pin.connected_pin
+        if connected is None:
+            return None
+
+        parent = connected.parentItem()
+        if not hasattr(parent, "pins"):
+            return None
+
+        for p in parent.pins:
+            if p is not connected:
+                result = self.find_connected_source(p, expected_name, visited)
+                if result:
+                    return result
+        return None
+
+    def simulate(self, running):
+        if not running:
             self.setBrush(QColor("gray"))
             return
 
-        if vcc.name == "VCC" and gnd.name == "GND":
-            self.setBrush(QColor("red"))  # doğru bağlantı
-        elif vcc.name == "GND" and gnd.name == "VCC":
+        vcc_pin = self.pins_by_name("VCC")
+        gnd_pin = self.pins_by_name("GND")
+
+        vcc_source = self.find_connected_source(vcc_pin, "VCC")
+        gnd_source = self.find_connected_source(gnd_pin, "GND")
+
+        if vcc_source and gnd_source:
+            self.setBrush(QColor("red"))
+        elif vcc_source or gnd_source:
             self.setBrush(QColor("darkRed"))  # ters bağlantı
         else:
-            self.setBrush(QColor("black"))  # bilinmeyen
+            self.setBrush(QColor("black"))  # bağlantı yok
