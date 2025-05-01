@@ -26,17 +26,22 @@ class GraphicsLED(QGraphicsRectItem):
                 return pin
         return None
 
-    def find_connected_source(self, pin, expected_name, visited=None):
+    def find_connected_source(self, start_pin, target_name, visited=None):
+        if start_pin is None:
+            return None
+
         if visited is None:
             visited = set()
-        if pin in visited:
+
+        if start_pin in visited:
             return None
-        visited.add(pin)
+        visited.add(start_pin)
 
-        if pin.name == expected_name:
-            return pin
+        # Eğer pinin ismi hedef isimse ve bu uç doğrudan bataryadaysa, kaynak bulundu
+        if start_pin.name == target_name and "Battery" in type(start_pin.parentItem()).__name__:
+            return start_pin
 
-        connected = pin.connected_pin
+        connected = start_pin.connected_pin
         if connected is None:
             return None
 
@@ -46,9 +51,10 @@ class GraphicsLED(QGraphicsRectItem):
 
         for p in parent.pins:
             if p is not connected:
-                result = self.find_connected_source(p, expected_name, visited)
-                if result:
-                    return result
+                continue
+            result = self.find_connected_source(p, target_name, visited)
+            if result:
+                return result
         return None
 
     def simulate(self, running):
@@ -65,6 +71,6 @@ class GraphicsLED(QGraphicsRectItem):
         if vcc_source and gnd_source:
             self.setBrush(QColor("red"))
         elif vcc_source or gnd_source:
-            self.setBrush(QColor("darkRed"))  # ters bağlantı
+            self.setBrush(QColor("darkRed"))
         else:
-            self.setBrush(QColor("black"))  # bağlantı yok
+            self.setBrush(QColor("gray"))
