@@ -54,5 +54,5 @@ class MainWindow(QMainWindow):
 
     def simulate_all(self):
         for item in self.scene.items():
-            if isinstance(item, GraphicsLED):
+            if hasattr(item, "simulate"):
                 item.simulate()

@@ -15,20 +15,24 @@ class GraphicsLED(QGraphicsRectItem):
         self.label.setDefaultTextColor(Qt.white)
         self.label.setPos(10, 5)
 
-        self.vcc = SelectablePin(-5, 10, connection_manager, self, name="VCC")
-        self.gnd = SelectablePin(45, 10, connection_manager, self, name="GND")
+        self.pins = [
+            SelectablePin(-5, 10, connection_manager, self, name="VCC"),
+            SelectablePin(45, 10, connection_manager, self, name="GND")
+        ]
 
     def simulate(self):
-        vcc_source = self.vcc.connected_pin
-        gnd_source = self.gnd.connected_pin
+        pins = {p.name: p.connected_pin for p in self.pins}
 
-        if not vcc_source or not gnd_source:
+        vcc = pins.get("VCC")
+        gnd = pins.get("GND")
+
+        if not vcc or not gnd:
             self.setBrush(QColor("gray"))
             return
 
-        if vcc_source.name == "VCC" and gnd_source.name == "GND":
-            self.setBrush(QColor("red"))
-        elif vcc_source.name == "GND" and gnd_source.name == "VCC":
-            self.setBrush(QColor("darkRed"))
+        if vcc.name == "VCC" and gnd.name == "GND":
+            self.setBrush(QColor("red"))  # doğru bağlantı
+        elif vcc.name == "GND" and gnd.name == "VCC":
+            self.setBrush(QColor("darkRed"))  # ters bağlantı
         else:
-            self.setBrush(QColor("black"))
+            self.setBrush(QColor("black"))  # bilinmeyen

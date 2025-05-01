@@ -15,5 +15,7 @@ class GraphicsBattery(QGraphicsRectItem):
         self.label.setDefaultTextColor(Qt.black)
         self.label.setPos(3, 5)
 
-        self.vcc = SelectablePin(-5, 10, connection_manager, self, name="VCC")
-        self.gnd = SelectablePin(55, 10, connection_manager, self, name="GND")
+        self.pins = [
+            SelectablePin(-5, 10, connection_manager, self, name="VCC"),
+            SelectablePin(55, 10, connection_manager, self, name="GND")
+        ]
