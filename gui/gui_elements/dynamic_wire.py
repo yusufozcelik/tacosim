@@ -8,6 +8,7 @@ class DynamicWire(QGraphicsLineItem):
         self.pin1 = pin1
         self.pin2 = pin2
         self.pen = QPen(color, 2)
+        self.color = color
         self.setPen(self.pen)
 
         self.setFlag(self.ItemIsSelectable)
@@ -20,9 +21,14 @@ class DynamicWire(QGraphicsLineItem):
 
         self.update_position()
 
-    def update_position(self):
+    def update_position(self, endpoint_pos=None):
         p1 = self.pin1.sceneBoundingRect().center()
-        p2 = self.pin2.sceneBoundingRect().center()
+        if self.pin2:
+            p2 = self.pin2.sceneBoundingRect().center()
+        elif endpoint_pos:
+            p2 = endpoint_pos
+        else:
+            return
         self.setLine(p1.x(), p1.y(), p2.x(), p2.y())
 
     def hoverEnterEvent(self, event):
@@ -62,3 +68,17 @@ class DynamicWire(QGraphicsLineItem):
             main_window.redo_stack.clear()
 
         self.scene().removeItem(self)
+
+    def to_dict(self):
+        return {
+            "type": "wire",
+            "from": {
+                "parent_id": self.pin1.parentItem().data(0),
+                "pin_name": self.pin1.name
+            },
+            "to": {
+                "parent_id": self.pin2.parentItem().data(0),
+                "pin_name": self.pin2.name
+            },
+            "color": self.color.name()
+        }

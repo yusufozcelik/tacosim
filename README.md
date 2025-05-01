@@ -1,65 +1,86 @@
-# 🔌 tacosim – Devre Simülasyon Yazılımı
+# 🔌 TACOSIM - Devre Simülatörü
 
-**tacosim**, Pardus (ve diğer Linux/MacOS sistemleri) üzerinde çalışan, PyQt5 tabanlı bir **etkileşimli devre simülasyon yazılımıdır**.  
-Kullanıcılar sürükle-bırak yöntemiyle devre elemanlarını yerleştirip, bunlar arasında bağlantılar kurarak çalışabilir ve simülasyonları görsel olarak izleyebilir.
-
----
-
-## 🎯 Amaç
-
-- Öğrencilerin elektronik devreleri sanal ortamda kurarak öğrenmelerini sağlamak
-- Gerçek dünya ile yazılım arasında bir köprü kurmak
-- Mikrodenetleyicilerle haberleşen sistemleri görselleştirmek
-- Seri port üzerinden veri alıp buna göre devre davranışını gösterebilmek (ileri aşama)
+**TACOSIM**, öğrencilerin temel elektronik bileşenleri kullanarak sürükle-bırak yöntemiyle devreler kurabildiği ve bu devreleri simüle edebildiği açık kaynaklı bir eğitim yazılımıdır.  
+**Pardus uyumlu**, sade, modern ve genişletilebilir bir tasarıma sahiptir.
 
 ---
 
-## 🧱 Mevcut Devre Elemanları
+## 📷 Ekran Görüntüsü
 
-| Eleman     | Açıklama                                      | Pin Sayısı |
-|------------|-----------------------------------------------|------------|
-| 🔋 Batarya  | VCC ve GND çıkışı sağlar                      | 2          |
-| 💡 LED      | VCC ve GND doğru bağlanırsa yanar             | 2          |
-| 🔸 Direnç   | Değeri ayarlanabilir (Ω, kΩ, MΩ)               | 2          |
+![tacosim](docs/screenshot.png)
 
 ---
 
-## ⚙️ Özellikler
+## 🎯 Özellikler
 
-✅ Sürükle-bırak ile sahneye eleman ekleme  
-✅ Pinleri tıklayarak kablo ile bağlama  
-✅ Bağlantı noktalarını dinamik takip eden kablolar  
-✅ Sağ tıklayarak eleman/kablo silme veya özelliğini değiştirme  
-✅ Simülasyon başlatıldığında LED gibi elemanlar otomatik olarak tepki verir  
-✅ Direnç üzerine tıklayarak değerini değiştirme (örn. 220Ω, 1kΩ)  
-✅ Dinamik pin yapısı: tüm elemanlar `self.pins` üzerinden işlenir  
-✅ Simülasyon başladığında bağlantı yolu analiz edilir (örn. Batarya ↔ Direnç ↔ LED)
-
----
-
-## 🔍 Simülasyon Davranışı
-
-| Durum                                    | LED Durumu        |
-|------------------------------------------|-------------------|
-| VCC ↔ LED.VCC, GND ↔ LED.GND             | 🔴 Yanıyor        |
-| VCC ↔ Direnç ↔ LED.VCC, GND ↔ LED.GND    | 🔴 Yanıyor        |
-| Ters bağlantı (GND ↔ VCC)                | 🟤 Ters bağlı      |
-| Bağlantı eksik                           | ⚫ Sönük (boşta)   |
+| Özellik                   | Açıklama                                                                 |
+|---------------------------|--------------------------------------------------------------------------|
+| ⚙️ Sürükle-bırak         | LED, direnç, batarya gibi elemanları sahneye kolayca yerleştirin         |
+| 🎨 Kablo Bağlama         | Pinden pine kablo çekerek devre oluşturma                                |
+| 🖱️ Sağ Tık İptal        | Bağlantı sırasında sağ tıklayarak işlemi iptal edebilme                   |
+| 🔄 Simülasyon            | Doğru bağlanan devrelerde LED yanar, ters bağlantı çalışmaz              |
+| 🧠 Gerçekçi Mantık       | Akım yönü, direnç etkisi, zincir takip sistemi                           |
+| 💾 JSON Kaydet/Yükle     | Devreyi `.json` dosyası olarak kaydedip tekrar yükleyebilme               |
+| ⚡ Dinamik Simülasyon     | Simülasyon açıkken bile bağlantılar eklenebilir                          |
+| 🖥️ Zoom / Pan           | Mouse ile zoom yapılabilir, orta tuş ile sahne gezdirilebilir             |
+| 💧 Watermark             | Sahne ortasında fade TACOSIM yazısı                                      |
+| 🧰 Temiz Arayüz          | Modern karanlık tema, sade simgeler, okunabilir yazılar                  |
 
 ---
 
-## ⌨️ Kısayollar
+## 🏁 Kurulum
 
-- `Delete` tuşu → Seçili kablo/eleman silinir  
-- Sağ tık kabloda → Rengini değiştir / Sil  
-- Sağ tık dirençte → Değer ayarla  
-- “Simülasyonu Başlat” butonu → Başlat/Durdur arasında geçiş yapar
-
----
-
-## 🚀 Kurulum
-
-1. Gerekli paketleri yükle:
+> Geliştirme ortamı: `Python 3.10+`, `PyQt5`, `Pardus`, `macOS`
 
 ```bash
+git clone https://github.com/yusufozcelik/tacosim.git
+cd tacosim
+python3 -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+python3 main.py
+```
+
+---
+
+## 🧪 Kullanım
+
+1. Sol panelden eleman ekleyin (LED, direnç, batarya)
+2. Bir pini tıklayın, sonra diğer pini tıklayarak kablo çekin
+3. Simülasyonu başlatmak için "Simülasyonu Başlat" butonuna basın
+4. Devre doğruysa LED yanar. Ters bağlantı yapılırsa çalışmaz
+5. Dosya > Devreyi Kaydet veya Yükle ile ilerleyin
+
+---
+
+## 🔋 Desteklenen Elemanlar
+
+| Eleman    | Özellikler                      |
+|-----------|---------------------------------|
+| LED       | + ve - uç kontrolü, yanma simülasyonu |
+| Batarya   | VCC ve GND ucu, güç kaynağı         |
+| Direnç    | Değer ayarı (Ω, kΩ), simülasyon etkisi |
+| Kablo     | Renk seçilebilir, pin bağlantılı     |
+
+> Yakında: Buton, potansiyometre, ampermetre, voltmetre...
+
+---
+
+## 💻 Geliştirici Notları
+
+- Her eleman için `to_dict()` / `from_dict()` metodları vardır
+- `DynamicWire` kablolar da JSON ile kayıt edilir
+- Bağlantılar `connected_pin` ile çift yönlü tutulur
+- `MainWindow` içindeki `save_scene_to_json()` / `load_scene_from_json()` işlevseldir
+
+---
+
+## 🏫 Geliştirenler
+
+> Bu yazılım, **TACETTİN ASLAN MTAL** öğrencileri tarafından  
+> **TEKNOFEST** yarışması için geliştirilmektedir.
+
+📅 Proje Başlangıç: 2025
+🧪 Amaç: Eğitimde elektronik devre öğretimini sadeleştirmek
+
+---

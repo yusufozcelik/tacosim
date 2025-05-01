@@ -9,7 +9,15 @@ class SelectablePin(QGraphicsEllipseItem):
         self.connected_pin = None
         self.name = name
 
-        self.setBrush(QBrush(QColor("white")))
+        # Başlangıçta rengi role göre ayarla
+        if name == "VCC":
+            self.default_color = QColor("red")
+        elif name == "GND":
+            self.default_color = QColor("black")
+        else:
+            self.default_color = QColor("white")
+
+        self.setBrush(QBrush(self.default_color))
         self.setFlag(self.ItemIsSelectable)
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.PointingHandCursor)
@@ -18,7 +26,7 @@ class SelectablePin(QGraphicsEllipseItem):
         self.setBrush(QBrush(QColor("cyan")))
 
     def hoverLeaveEvent(self, event):
-        self.setBrush(QBrush(QColor("white")))
+        self.setBrush(QBrush(self.default_color))
 
     def mousePressEvent(self, event):
         self.connection_manager.pin_clicked(self)

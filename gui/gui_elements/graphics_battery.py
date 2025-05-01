@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem
+from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
@@ -19,3 +19,24 @@ class GraphicsBattery(QGraphicsRectItem):
             SelectablePin(-5, 10, connection_manager, self, name="VCC"),
             SelectablePin(55, 10, connection_manager, self, name="GND")
         ]
+
+    def contextMenuEvent(self, event):
+        menu = QMenu()
+        delete_action = menu.addAction("🗑️ Sil")
+        selected_action = menu.exec_(event.screenPos())
+        if selected_action == delete_action:
+            if hasattr(self, "delete"):
+                self.delete()
+            else:
+                self.scene().removeItem(self)
+
+    def to_dict(self):
+        return {
+            "type": "battery",
+            "x": self.pos().x(),
+            "y": self.pos().y()
+        }
+
+    @staticmethod
+    def from_dict(data, connection_manager):
+        return GraphicsBattery(data["x"], data["y"], connection_manager)

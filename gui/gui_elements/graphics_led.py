@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem
+from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
@@ -49,8 +49,6 @@ class GraphicsLED(QGraphicsRectItem):
             return None
 
         for next_pin in parent.pins:
-            if next_pin is connected:
-                continue
             result = self.find_connected_source(next_pin, expected_name, visited)
             if result:
                 return result
@@ -69,8 +67,28 @@ class GraphicsLED(QGraphicsRectItem):
         gnd_source = self.find_connected_source(gnd_pin, "GND")
 
         if vcc_source and gnd_source:
-            self.setBrush(QColor("red"))
-        elif vcc_source or gnd_source:
-            self.setBrush(QColor("darkRed"))
+            self.setBrush(QColor("red"))  # doğru bağlandı
         else:
-            self.setBrush(QColor("gray"))
+            self.setBrush(QColor("gray"))  # eksik ya da ters bağlantı
+
+    def contextMenuEvent(self, event):
+        menu = QMenu()
+        delete_action = menu.addAction("🗑️Sil")
+        selected_action = menu.exec_(event.screenPos())
+        if selected_action == delete_action:
+            if hasattr(self, "delete"):
+                self.delete()
+            else:
+                self.scene().removeItem(self)
+    
+    def to_dict(self):
+        return {
+            "type": "led",
+            "x": self.pos().x(),
+            "y": self.pos().y()
+        }
+
+    @staticmethod
+    def from_dict(data, connection_manager):
+        led = GraphicsLED(data["x"], data["y"], connection_manager)
+        return led

@@ -58,7 +58,6 @@ class GraphicsResistor(QGraphicsRectItem):
         unit_combo = QComboBox()
         unit_combo.addItems(["Ω", "kΩ", "MΩ"])
 
-        # ✅ Mevcut değeri input_field ve unit_combo'ya düzgün ayarla
         import re
         match = re.match(r"^(\d+(?:\.\d+)?)(Ω|kΩ|MΩ)$", self.resistance_value)
         if match:
@@ -69,7 +68,7 @@ class GraphicsResistor(QGraphicsRectItem):
                 unit_combo.setCurrentIndex(index)
         else:
             input_field.setText("1")
-            unit_combo.setCurrentIndex(1)  # default: kΩ
+            unit_combo.setCurrentIndex(1)
 
         form_layout.addWidget(input_label)
         form_layout.addWidget(input_field)
@@ -89,3 +88,14 @@ class GraphicsResistor(QGraphicsRectItem):
             self.setBrush(QColor("#f4a261")) # simülasyon sırasında hafif parlak
         else:
             self.setBrush(QColor("#b8860b")) # normal renk
+
+    def to_dict(self):
+        return {
+            "type": "resistor",
+            "x": self.pos().x(),
+            "y": self.pos().y()
+        }
+
+    @staticmethod
+    def from_dict(data, connection_manager):
+        return GraphicsResistor(data["x"], data["y"], connection_manager)
