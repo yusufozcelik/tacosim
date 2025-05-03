@@ -5,7 +5,7 @@ from gui.connection_manager import ConnectionManager
 from gui.gui_elements.graphics_battery import GraphicsBattery
 from gui.gui_elements.graphics_resistor import GraphicsResistor
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QColor
+from PyQt5.QtGui import QFont, QColor, QIcon
 import webbrowser
 from gui.graphics_view import CustomGraphicsView
 import json
@@ -17,6 +17,8 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Tacosim - Devre Simülatörü")
         self.setGeometry(100, 100, 1000, 700)
+
+        self.setWindowIcon(QIcon("assets/tacosim_logo.png"))
         
         self.simulation_running = False
 
@@ -97,6 +99,10 @@ class MainWindow(QMainWindow):
 
         # Yardım Menüsü
         help_menu = menu_bar.addMenu("Yardım")
+
+        about_action = QAction("Hakkında", self)
+        about_action.triggered.connect(self.show_about)
+        help_menu.addAction(about_action)
 
         github_action = QAction("GitHub Sayfasını Aç", self)
         github_action.triggered.connect(lambda: webbrowser.open("https://github.com/yusufozcelik/tacosim"))
@@ -267,3 +273,10 @@ class MainWindow(QMainWindow):
                 self.scene.addItem(wire)
                 pin1.connected_pin = pin2
                 pin2.connected_pin = pin1
+
+    def show_about(self):
+        QMessageBox.information(self, "Hakkında",
+            "<h3>TACOSIM</h3>"
+            "<p>Elektronik devre simülatörü</p>"
+            "<img src='assets/tacosim_logo.png' width='100'>"
+        )

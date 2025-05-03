@@ -15,7 +15,7 @@ class GraphicsResistor(QGraphicsRectItem):
         self.label.setDefaultTextColor(Qt.black)
         self.label.setPos(18, 5)
 
-        self.resistance_value = "1kΩ"
+        self.resistance_value = "220Ω"
         self.value_label = QGraphicsTextItem(self.resistance_value, self)
         self.value_label.setDefaultTextColor(Qt.white)
         self.value_label.setPos(10, 20)

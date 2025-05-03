@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu
+from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu, QColorDialog
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
@@ -15,6 +15,8 @@ class GraphicsLED(QGraphicsRectItem):
         self.label = QGraphicsTextItem("LED", self)
         self.label.setDefaultTextColor(Qt.white)
         self.label.setPos(10, 5)
+
+        self.led_color = QColor("red")
 
         self.pins = [
             SelectablePin(-5, 10, connection_manager, self, name="VCC"),
@@ -67,28 +69,39 @@ class GraphicsLED(QGraphicsRectItem):
         gnd_source = self.find_connected_source(gnd_pin, "GND")
 
         if vcc_source and gnd_source:
-            self.setBrush(QColor("red"))  # doğru bağlandı
+            self.setBrush(self.led_color)  # doğru bağlandı
         else:
             self.setBrush(QColor("gray"))  # eksik ya da ters bağlantı
 
     def contextMenuEvent(self, event):
         menu = QMenu()
         delete_action = menu.addAction("🗑️Sil")
+        color_action = menu.addAction("🎨 Renk Seç")
         selected_action = menu.exec_(event.screenPos())
         if selected_action == delete_action:
             if hasattr(self, "delete"):
                 self.delete()
             else:
                 self.scene().removeItem(self)
+        elif selected_action == color_action:
+            self.select_color()
+    
+    def select_color(self):
+        color = QColorDialog.getColor(initial=self.led_color)
+        if color.isValid():
+            self.led_color = color
     
     def to_dict(self):
         return {
             "type": "led",
             "x": self.pos().x(),
-            "y": self.pos().y()
+            "y": self.pos().y(),
+            "color": self.led_color.name()
         }
 
     @staticmethod
     def from_dict(data, connection_manager):
         led = GraphicsLED(data["x"], data["y"], connection_manager)
+        led.led_color = QColor(data.get("color", "#ff0000"))
         return led
+    
