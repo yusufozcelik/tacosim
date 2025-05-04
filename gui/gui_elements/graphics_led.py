@@ -1,12 +1,13 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu, QColorDialog
+from PyQt5.QtWidgets import QGraphicsTextItem, QMenu, QColorDialog
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
-from gui.gui_elements.graphics_battery import GraphicsBattery
+from components.base_component import BaseComponent
 
-class GraphicsLED(QGraphicsRectItem):
+class GraphicsLED(BaseComponent):
     def __init__(self, x, y, connection_manager):
         super().__init__(QRectF(0, 0, 50, 30))
+
         self.setPos(x, y)
         self.setBrush(QBrush(QColor("gray")))
         self.setFlag(self.ItemIsMovable)
@@ -17,11 +18,26 @@ class GraphicsLED(QGraphicsRectItem):
         self.label.setPos(10, 5)
 
         self.led_color = QColor("red")
+        self.voltage = 0.0
+        self.current = 0.0
 
         self.pins = [
             SelectablePin(-5, 10, connection_manager, self, name="VCC"),
             SelectablePin(45, 10, connection_manager, self, name="GND")
         ]
+
+    def get_pins(self):
+        return self.pins
+
+    def get_resistance(self):
+        return 0.0
+
+    def get_voltage(self):
+        return 0.0
+
+    def set_simulation_results(self, voltage, current):
+        self.voltage = voltage
+        self.current = current
 
     def pins_by_name(self, name):
         for pin in self.pins:
@@ -29,49 +45,23 @@ class GraphicsLED(QGraphicsRectItem):
                 return pin
         return None
 
-    def find_connected_source(self, pin, expected_name, visited=None):
-        if pin is None:
-            return None
-
-        if visited is None:
-            visited = set()
-        if pin in visited:
-            return None
-        visited.add(pin)
-
-        if pin.name == expected_name and isinstance(pin.parentItem(), GraphicsBattery):
-            return pin
-
-        connected = pin.connected_pin
-        if connected is None:
-            return None
-
-        parent = connected.parentItem()
-        if not hasattr(parent, "pins"):
-            return None
-
-        for next_pin in parent.pins:
-            result = self.find_connected_source(next_pin, expected_name, visited)
-            if result:
-                return result
-
-        return None
-
-    def simulate(self, running):
-        if not running:
+    def simulate(self, simulation_engine):
+        if not simulation_engine.running:
             self.setBrush(QColor("gray"))
+            self.current = 0.0  # simülasyon durduğunda sıfırla
+            self.voltage = 0.0
             return
 
-        vcc_pin = self.pins_by_name("VCC")
-        gnd_pin = self.pins_by_name("GND")
+        # Eğer voltage veya current atanmadıysa devre tamamlanmamış demektir
+        voltage = getattr(self, "voltage", 0.0)
+        current = getattr(self, "current", 0.0)
 
-        vcc_source = self.find_connected_source(vcc_pin, "VCC")
-        gnd_source = self.find_connected_source(gnd_pin, "GND")
-
-        if vcc_source and gnd_source:
-            self.setBrush(self.led_color)  # doğru bağlandı
+        if voltage == 0.0 or current == 0.0:
+            self.setBrush(QColor("gray"))
+        elif current > 0.05:  # Patlama durumu
+            self.setBrush(QColor("orange"))
         else:
-            self.setBrush(QColor("gray"))  # eksik ya da ters bağlantı
+            self.setBrush(QColor(self.led_color))
 
     def contextMenuEvent(self, event):
         menu = QMenu()
@@ -85,12 +75,12 @@ class GraphicsLED(QGraphicsRectItem):
                 self.scene().removeItem(self)
         elif selected_action == color_action:
             self.select_color()
-    
+
     def select_color(self):
         color = QColorDialog.getColor(initial=self.led_color)
         if color.isValid():
             self.led_color = color
-    
+
     def to_dict(self):
         return {
             "type": "led",
@@ -104,4 +94,3 @@ class GraphicsLED(QGraphicsRectItem):
         led = GraphicsLED(data["x"], data["y"], connection_manager)
         led.led_color = QColor(data.get("color", "#ff0000"))
         return led
-    

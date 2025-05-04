@@ -1,13 +1,15 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu, QAction, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
+from PyQt5.QtWidgets import QGraphicsTextItem, QMenu, QAction, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
 from PyQt5.QtGui import QBrush, QColor
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
+from components.base_component import BaseComponent
+import re
 
-class GraphicsResistor(QGraphicsRectItem):
+class GraphicsResistor(BaseComponent):
     def __init__(self, x, y, connection_manager):
         super().__init__(QRectF(0, 0, 60, 30))
         self.setPos(x, y)
-        self.setBrush(QBrush(QColor("#b8860b"))) # açık kahverengi
+        self.setBrush(QBrush(QColor("#b8860b")))
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
 
@@ -25,6 +27,37 @@ class GraphicsResistor(QGraphicsRectItem):
             SelectablePin(55, 10, connection_manager, self, name="B")
         ]
 
+    def get_pins(self):
+        return self.pins
+    
+    def set_simulation_results(self, voltage, current):
+        self.voltage = voltage
+        self.current = current
+
+    def get_resistance(self):
+        match = re.match(r"^(\d+(?:\.\d+)?)(Ω|kΩ|MΩ)$", self.resistance_value)
+        if not match:
+            return 0.0
+
+        number, unit = match.groups()
+        value = float(number)
+
+        if unit == "kΩ":
+            value *= 1_000
+        elif unit == "MΩ":
+            value *= 1_000_000
+
+        return value
+
+    def get_voltage(self):
+        return 0.0
+
+    def simulate(self, simulation_engine):
+        if simulation_engine.running:
+            self.setBrush(QColor("#f4a261"))
+        else:
+            self.setBrush(QColor("#b8860b"))
+
     def contextMenuEvent(self, event):
         menu = QMenu()
         set_value_action = QAction("⚙️ Direnç Değerini Ayarla", menu)
@@ -39,7 +72,7 @@ class GraphicsResistor(QGraphicsRectItem):
 
     def set_resistor_value(self, value, unit, dialog):
         try:
-            float(value)  # geçerli mi kontrol et
+            float(value)
             self.resistance_value = f"{value}{unit}"
             self.value_label.setPlainText(self.resistance_value)
             dialog.accept()
@@ -58,7 +91,6 @@ class GraphicsResistor(QGraphicsRectItem):
         unit_combo = QComboBox()
         unit_combo.addItems(["Ω", "kΩ", "MΩ"])
 
-        import re
         match = re.match(r"^(\d+(?:\.\d+)?)(Ω|kΩ|MΩ)$", self.resistance_value)
         if match:
             number, unit = match.groups()
@@ -68,7 +100,7 @@ class GraphicsResistor(QGraphicsRectItem):
                 unit_combo.setCurrentIndex(index)
         else:
             input_field.setText("1")
-            unit_combo.setCurrentIndex(1)
+            unit_combo.setCurrentIndex(0)
 
         form_layout.addWidget(input_label)
         form_layout.addWidget(input_field)
@@ -83,19 +115,17 @@ class GraphicsResistor(QGraphicsRectItem):
         dialog.setLayout(layout)
         dialog.exec_()
 
-    def simulate(self, running):
-        if running:
-            self.setBrush(QColor("#f4a261")) # simülasyon sırasında hafif parlak
-        else:
-            self.setBrush(QColor("#b8860b")) # normal renk
-
     def to_dict(self):
         return {
             "type": "resistor",
             "x": self.pos().x(),
-            "y": self.pos().y()
+            "y": self.pos().y(),
+            "value": self.resistance_value
         }
 
     @staticmethod
     def from_dict(data, connection_manager):
-        return GraphicsResistor(data["x"], data["y"], connection_manager)
+        resistor = GraphicsResistor(data["x"], data["y"], connection_manager)
+        resistor.resistance_value = data.get("value", "220Ω")
+        resistor.value_label.setPlainText(resistor.resistance_value)
+        return resistor

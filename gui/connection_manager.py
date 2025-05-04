@@ -19,10 +19,13 @@ class ConnectionManager:
             if pin == self.first_pin:
                 self.cancel_connection()
                 return
+
             wire = DynamicWire(self.first_pin, pin, self.current_color)
             self.scene.addItem(wire)
-            self.first_pin.connected_pin = pin
-            pin.connected_pin = self.first_pin
+
+            self.first_pin.connect_to(pin)
+            pin.connect_to(self.first_pin)
+
             self.cancel_connection()
 
     def start_temp_wire(self, pin):

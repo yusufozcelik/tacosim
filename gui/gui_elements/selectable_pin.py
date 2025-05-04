@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QGraphicsEllipseItem
 from PyQt5.QtGui import QBrush, QColor
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QEvent
 
 class SelectablePin(QGraphicsEllipseItem):
     def __init__(self, x, y, connection_manager, parent=None, name=""):
@@ -9,7 +9,6 @@ class SelectablePin(QGraphicsEllipseItem):
         self.connected_pin = None
         self.name = name
 
-        # Başlangıçta rengi role göre ayarla
         if name == "VCC":
             self.default_color = QColor("red")
         elif name == "GND":
@@ -22,6 +21,15 @@ class SelectablePin(QGraphicsEllipseItem):
         self.setAcceptHoverEvents(True)
         self.setCursor(Qt.PointingHandCursor)
 
+        self.setAcceptHoverEvents(True)
+
+        if self.scene():
+            self.scene().installEventFilter(self)
+
+    def connect_to(self, other_pin):
+        self.connected_pin = other_pin
+        other_pin.connected_pin = self
+
     def hoverEnterEvent(self, event):
         self.setBrush(QBrush(QColor("cyan")))
 
@@ -30,3 +38,8 @@ class SelectablePin(QGraphicsEllipseItem):
 
     def mousePressEvent(self, event):
         self.connection_manager.pin_clicked(self)
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.GraphicsSceneMouseMove:
+            self.connection_manager.update_temp_wire(event.scenePos())
+        return False

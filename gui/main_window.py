@@ -10,6 +10,8 @@ import webbrowser
 from gui.graphics_view import CustomGraphicsView
 import json
 from gui.gui_elements.dynamic_wire import DynamicWire
+from components.base_component import BaseComponent
+from gui.simulation_engine import SimulationEngine
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -41,6 +43,9 @@ class MainWindow(QMainWindow):
         self.scene = QGraphicsScene()
         self.view = CustomGraphicsView(self.scene)
         self.setCentralWidget(self.view)
+
+        self.status_label = QLabel("V: -, R: -, I: -")
+        self.statusBar().addPermanentWidget(self.status_label)
 
         self.watermark_label = QLabel("TACOSIM", self.view)
         self.watermark_label.setStyleSheet("color: rgba(255, 255, 255, 20);")
@@ -136,18 +141,39 @@ class MainWindow(QMainWindow):
     def simulate_all(self):
         self.simulation_running = not self.simulation_running
 
+        self.simulation_engine = SimulationEngine(self.scene)
+        self.simulation_engine.running = self.simulation_running
+
         if self.simulation_running:
             print("🔁 Simülasyon başladı")
             self.palette.btn_simulate.setText("Simülasyonu Durdur")
             self.statusBar().showMessage("Simülasyon çalışıyor...")
+
+            self.simulation_engine.run()
+
+            for item in self.scene.items():
+                if hasattr(item, "simulate"):
+                    item.simulate(self.simulation_engine)
+
+            for item in self.scene.items():
+                if isinstance(item, GraphicsLED):
+                    voltage = getattr(item, "voltage", 0.0)
+                    current = getattr(item, "current", 0.0)
+                    resistance = self.simulation_engine.last_total_resistance
+
+                    self.status_label.setText(
+                        f"V: {voltage:.1f}V | R: {resistance:.1f}Ω | I: {current:.4f}A"
+                    )
+                    break
         else:
             print("⛔ Simülasyon durdu")
             self.palette.btn_simulate.setText("Simülasyonu Başlat")
             self.statusBar().showMessage("Simülasyon durduruldu.")
+            self.status_label.setText("V: -, R: -, I: -")
 
-        for item in self.scene.items():
-            if hasattr(item, "simulate"):
-                item.simulate(self.simulation_running)
+            for item in self.scene.items():
+                if hasattr(item, "simulate"):
+                    item.simulate(self.simulation_engine)
 
     def add_resistor_to_scene(self):
         resistor = GraphicsResistor(150, 150, self.connection_manager)

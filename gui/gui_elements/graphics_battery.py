@@ -1,9 +1,10 @@
-from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsTextItem, QMenu, QInputDialog
+from PyQt5.QtWidgets import QGraphicsTextItem, QMenu, QInputDialog
 from PyQt5.QtGui import QBrush, QColor, QFont
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
+from components.base_component import BaseComponent
 
-class GraphicsBattery(QGraphicsRectItem):
+class GraphicsBattery(BaseComponent):
     def __init__(self, x, y, connection_manager):
         super().__init__(QRectF(0, 0, 60, 30))
         self.setPos(x, y)
@@ -16,6 +17,7 @@ class GraphicsBattery(QGraphicsRectItem):
         self.label.setPos(3, 5)
 
         self.voltage = 5.0
+        self.current = 0.0
 
         self.value_label = QGraphicsTextItem(f"{self.voltage:.1f}V", self)
         self.value_label.setDefaultTextColor(Qt.white)
@@ -25,6 +27,23 @@ class GraphicsBattery(QGraphicsRectItem):
             SelectablePin(-5, 10, connection_manager, self, name="VCC"),
             SelectablePin(55, 10, connection_manager, self, name="GND")
         ]
+
+    def get_pins(self):
+        return self.pins
+
+    def get_resistance(self):
+        return 0.0001
+
+    def get_voltage(self):
+        return self.voltage
+
+    def set_simulation_results(self, voltage, current):
+        self.current = current
+        self.voltage = voltage
+        self.value_label.setPlainText(f"{self.voltage:.1f}V")
+
+    def simulate(self, running: bool):
+        pass
 
     def contextMenuEvent(self, event):
         menu = QMenu()
@@ -46,7 +65,7 @@ class GraphicsBattery(QGraphicsRectItem):
             "Batarya gerilimi (V):",
             self.voltage,
             0.1, 24.0,
-            1  # ondalık hassasiyet
+            1
         )
         if ok:
             self.voltage = value
@@ -64,5 +83,5 @@ class GraphicsBattery(QGraphicsRectItem):
     def from_dict(data, connection_manager):
         battery = GraphicsBattery(data["x"], data["y"], connection_manager)
         battery.voltage = data.get("voltage", 5.0)
-        battery.voltage_label.setPlainText(f"{battery.voltage:.1f}V")
+        battery.value_label.setPlainText(f"{battery.voltage:.1f}V")
         return battery
