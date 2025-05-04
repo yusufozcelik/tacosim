@@ -171,6 +171,8 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Simülasyon durduruldu.")
             self.status_label.setText("V: -, R: -, I: -")
 
+            self.simulation_engine.stop()
+
             for item in self.scene.items():
                 if hasattr(item, "simulate"):
                     item.simulate(self.simulation_engine)

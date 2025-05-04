@@ -61,7 +61,10 @@ class GraphicsLED(BaseComponent):
         elif current > 0.05:  # Patlama durumu
             self.setBrush(QColor("orange"))
         else:
-            self.setBrush(QColor(self.led_color))
+            intensity = min(255, max(50, int(current * 4000)))
+            color_with_alpha = QColor(self.led_color)
+            color_with_alpha.setAlpha(intensity)
+            self.setBrush(color_with_alpha)
 
     def contextMenuEvent(self, event):
         menu = QMenu()

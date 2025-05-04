@@ -1,15 +1,17 @@
 from typing import List, Set
 from gui.gui_elements.selectable_pin import SelectablePin
+from components.simulation_logger import SimulationLogger
 
 class SimulationEngine:
-    def __init__(self, scene):
+    def __init__(self, scene, logger=None):
         self.scene = scene
         self.running = False
         self.last_total_resistance = 0.0
+        self.logger = logger or SimulationLogger()
 
     def run(self):
         self.running = True
-        print("⚡ Simülasyon Motoru Başlatıldı")
+        self.logger.log("⚡ Simülasyon Motoru Başlatıldı")
 
         batteries = [item for item in self.scene.items() if hasattr(item, 'get_voltage') and item.get_voltage() > 0]
 
@@ -26,10 +28,14 @@ class SimulationEngine:
             if vcc_pin and gnd_pin:
                 path = self.trace_complete_loop(vcc_pin, gnd_pin)
                 if path:
-                    print("[Engine] ✅ Kapalı devre bulundu, hesaplama yapılıyor.")
+                    self.logger.log("[Engine] ✅ Kapalı devre bulundu, hesaplama yapılıyor.")
                     self.calculate_and_apply(path)
                 else:
-                    print("[Engine] ❌ Kapalı devre bulunamadı, simülasyon uygulanmayacak.")
+                    self.logger.log("[Engine] ❌ Kapalı devre bulunamadı, simülasyon uygulanmayacak.")
+    
+    def stop(self):
+        self.running = False
+        self.logger.log("🛑 Simülasyon Motoru Durduruldu")
 
     def trace_path(self, pin: SelectablePin, visited: Set[SelectablePin]) -> List:
         path = []
@@ -61,7 +67,7 @@ class SimulationEngine:
         batteries = [comp for comp in path if comp.__class__.__name__ == "GraphicsBattery"]
 
         if not batteries:
-            print("[Engine] ⚠️ Voltaj kaynağı (batarya) bulunamadı.")
+            self.logger.log("[Engine] ⚠️ Voltaj kaynağı (batarya) bulunamadı.")
             return
 
         source_voltage = batteries[0].get_voltage()
@@ -90,7 +96,6 @@ class SimulationEngine:
             if pin == end_pin:
                 return True
 
-            # 1. Kendi parent'ındaki diğer pinlere bak
             for sibling in parent.get_pins():
                 if sibling is pin:
                     continue
@@ -98,7 +103,6 @@ class SimulationEngine:
                 if connected and dfs(connected):
                     return True
 
-            # 2. Kendi pininden bağlı olan pine doğrudan geç
             if pin.connected_pin:
                 connected = pin.connected_pin
                 if dfs(connected):
@@ -109,5 +113,5 @@ class SimulationEngine:
         if dfs(start_pin):
             return path_components
         else:
-            print("[trace] ❌ No loop found")
+            self.logger.log("[trace] ❌ No loop found")
             return []
