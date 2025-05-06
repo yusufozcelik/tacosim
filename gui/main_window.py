@@ -241,6 +241,9 @@ class MainWindow(QMainWindow):
         if not file_path:
             return
 
+        if not file_path.lower().endswith(".json"):
+            file_path += ".json"
+
         items_data = []
 
         id_counter = 1
