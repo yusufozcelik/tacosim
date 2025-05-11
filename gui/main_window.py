@@ -12,6 +12,7 @@ import json
 from gui.gui_elements.dynamic_wire import DynamicWire
 from components.base_component import BaseComponent
 from gui.simulation_engine import SimulationEngine
+from gui.gui_elements.graphics_button import GraphicsButton
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -44,6 +45,23 @@ class MainWindow(QMainWindow):
         self.view = CustomGraphicsView(self.scene)
         self.setCentralWidget(self.view)
 
+        self.info_label = QLabel(self.view)
+        self.info_label.setStyleSheet("""
+            QLabel {
+                color: white;
+                background-color: rgba(0, 0, 0, 150);
+                border: 1px solid #555;
+                border-radius: 6px;
+                padding: 4px 10px;
+            }
+        """)
+        self.info_label.setFont(QFont("Arial", 10, QFont.Bold))
+        self.info_label.move(10, 10)
+        self.info_label.setText("V: -, R: -, I: -")
+        self.info_label.setFixedWidth(250)
+        self.info_label.setAttribute(Qt.WA_TransparentForMouseEvents)
+        self.info_label.show()
+
         self.status_label = QLabel("V: -, R: -, I: -")
         self.statusBar().addPermanentWidget(self.status_label)
 
@@ -69,7 +87,8 @@ class MainWindow(QMainWindow):
             on_battery_add=self.add_battery_to_scene,
             on_resistor_add=self.add_resistor_to_scene,
             on_simulate=self.simulate_all,
-            on_reset=self.reset_scene
+            on_reset=self.reset_scene,
+            on_button_add=self.add_button_to_scene
         )
         self.dock = QDockWidget("Elemanlar")
         self.dock.setWidget(self.palette)
@@ -161,7 +180,7 @@ class MainWindow(QMainWindow):
                     current = getattr(item, "current", 0.0)
                     resistance = self.simulation_engine.last_total_resistance
 
-                    self.status_label.setText(
+                    self.info_label.setText(
                         f"V: {voltage:.1f}V | R: {resistance:.1f}Ω | I: {current:.4f}A"
                     )
                     break
@@ -169,13 +188,31 @@ class MainWindow(QMainWindow):
             print("⛔ Simülasyon durdu")
             self.palette.btn_simulate.setText("Simülasyonu Başlat")
             self.statusBar().showMessage("Simülasyon durduruldu.")
-            self.status_label.setText("V: -, R: -, I: -")
+            self.info_label.setText("V: -, R: -, I: -")
 
             self.simulation_engine.stop()
 
             for item in self.scene.items():
                 if hasattr(item, "simulate"):
                     item.simulate(self.simulation_engine)
+
+    def rerun_simulation_and_update_status(self):
+        if not hasattr(self, "simulation_engine") or not self.simulation_engine:
+            return
+
+        self.simulation_engine.run()
+
+        for item in self.scene.items():
+            if hasattr(item, "simulate"):
+                item.simulate(self.simulation_engine)
+
+        for item in self.scene.items():
+            if isinstance(item, GraphicsLED):
+                voltage = getattr(item, "voltage", 0.0)
+                current = getattr(item, "current", 0.0)
+                resistance = self.simulation_engine.last_total_resistance
+                self.info_label.setText(f"V: {voltage:.1f}V | R: {resistance:.1f}Ω | I: {current:.4f}A")
+                break
 
     def add_resistor_to_scene(self):
         resistor = GraphicsResistor(150, 150, self.connection_manager)
@@ -236,6 +273,14 @@ class MainWindow(QMainWindow):
                 self.watermark_label.width(),
                 self.watermark_label.height()
             )
+        if hasattr(self, "info_label"):
+            self.info_label.move(10, 10)
+    
+    def add_button_to_scene(self):
+        button = GraphicsButton(100, 100, self.connection_manager)
+        self.scene.addItem(button)
+        self.history_stack.append({"type": "add", "item": button})
+        self.redo_stack.clear()
 
     def save_scene_to_json(self, file_path):
         if not file_path:

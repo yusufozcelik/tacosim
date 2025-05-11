@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QGraphicsTextItem, QMenu, QAction, QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QComboBox
-from PyQt5.QtGui import QBrush, QColor
+from PyQt5.QtGui import QBrush, QColor, QPainter
 from PyQt5.QtCore import QRectF, Qt
 from gui.gui_elements.selectable_pin import SelectablePin
 from components.base_component import BaseComponent
@@ -12,10 +12,8 @@ class GraphicsResistor(BaseComponent):
         self.setBrush(QBrush(QColor("#b8860b")))
         self.setFlag(self.ItemIsMovable)
         self.setFlag(self.ItemSendsGeometryChanges)
+        self.setTransformOriginPoint(self.boundingRect().center())
 
-        self.label = QGraphicsTextItem("DIR", self)
-        self.label.setDefaultTextColor(Qt.black)
-        self.label.setPos(18, 5)
 
         self.resistance_value = "220Ω"
         self.value_label = QGraphicsTextItem(self.resistance_value, self)
@@ -26,6 +24,45 @@ class GraphicsResistor(BaseComponent):
             SelectablePin(-5, 10, connection_manager, self, name="A"),
             SelectablePin(55, 10, connection_manager, self, name="B")
         ]
+
+    def paint(self, painter, option, widget=None):
+        painter.setRenderHint(QPainter.Antialiasing)
+
+        # Draw the body
+        painter.setBrush(QColor("#b8860b"))  # light brown body
+        painter.setPen(Qt.black)
+        painter.drawRoundedRect(10, 5, 40, 20, 5, 5)
+
+        # Draw the leads
+        painter.setBrush(QColor("#888888"))  # metal leads
+        painter.drawRect(0, 12, 10, 6)
+        painter.drawRect(50, 12, 10, 6)
+
+        # Determine color bands based on resistance
+        ohms = int(self.get_resistance())
+        digits = list(str(ohms))
+        colors = {
+            '0': "black", '1': "brown", '2': "red", '3': "orange", '4': "yellow",
+            '5': "green", '6': "blue", '7': "violet", '8': "gray", '9': "white"
+        }
+
+        if len(digits) >= 2:
+            band_width = 5
+            band_height = 20
+            band_spacing = 8
+
+            start_x = 14  # starting X position for first band
+
+            color1 = QColor(colors.get(digits[0], "black"))
+            color2 = QColor(colors.get(digits[1], "black"))
+            multiplier_color = QColor(colors.get(str(len(digits)-2), "black"))
+
+            painter.setBrush(color1)
+            painter.drawRect(start_x, 5, band_width, band_height)
+            painter.setBrush(color2)
+            painter.drawRect(start_x + band_spacing, 5, band_width, band_height)
+            painter.setBrush(multiplier_color)
+            painter.drawRect(start_x + 2 * band_spacing, 5, band_width, band_height)
 
     def get_pins(self):
         return self.pins
@@ -58,15 +95,30 @@ class GraphicsResistor(BaseComponent):
         else:
             self.setBrush(QColor("#b8860b"))
 
+    def rotate_left(self):
+        self.setRotation(self.rotation() - 90)
+
+    def rotate_right(self):
+        self.setRotation(self.rotation() + 90)
+
     def contextMenuEvent(self, event):
         menu = QMenu()
-        set_value_action = QAction("⚙️ Direnç Değerini Ayarla", menu)
-        set_value_action.triggered.connect(self.open_value_dialog)
-        menu.addAction(set_value_action)
 
         delete_action = QAction("🗑️ Sil", menu)
         delete_action.triggered.connect(lambda: self.scene().removeItem(self))
         menu.addAction(delete_action)
+
+        set_value_action = QAction("⚙️ Direnç Değerini Ayarla", menu)
+        set_value_action.triggered.connect(self.open_value_dialog)
+        menu.addAction(set_value_action)
+
+        rotate_left_action = QAction("⟲ 90° Sola Döndür", menu)
+        rotate_left_action.triggered.connect(self.rotate_left)
+        menu.addAction(rotate_left_action)
+
+        rotate_right_action = QAction("⟳ 90° Sağa Döndür", menu)
+        rotate_right_action.triggered.connect(self.rotate_right)
+        menu.addAction(rotate_right_action)
 
         menu.exec_(event.screenPos())
 
