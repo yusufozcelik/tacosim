@@ -13,6 +13,8 @@ from gui.gui_elements.dynamic_wire import DynamicWire
 from components.base_component import BaseComponent
 from gui.simulation_engine import SimulationEngine
 from gui.gui_elements.graphics_button import GraphicsButton
+from gui.windows.serial_monitor import SerialMonitorWindow
+from gui.gui_elements.graphics_potentiometer import GraphicsPotentiometer
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -88,7 +90,8 @@ class MainWindow(QMainWindow):
             on_resistor_add=self.add_resistor_to_scene,
             on_simulate=self.simulate_all,
             on_reset=self.reset_scene,
-            on_button_add=self.add_button_to_scene
+            on_button_add=self.add_button_to_scene,
+            on_potentiometer_add=self.add_potentiometer_to_scene
         )
         self.dock = QDockWidget("Elemanlar")
         self.dock.setWidget(self.palette)
@@ -114,6 +117,13 @@ class MainWindow(QMainWindow):
         ))
         file_menu.addAction(load_action)
 
+        # Seri Port
+        serial_menu = menu_bar.addMenu("Seri Port")
+
+        serial_action = QAction("Seri Port İzleyici", self)
+        serial_action.triggered.connect(self.open_serial_monitor)
+        serial_menu.addAction(serial_action)
+
         # Görünüm Menüsü
         view_menu = menu_bar.addMenu("Görünüm")
         self.show_dock_action = QAction("Eleman Panelini Göster", self, checkable=True)
@@ -131,6 +141,10 @@ class MainWindow(QMainWindow):
         github_action = QAction("GitHub Sayfasını Aç", self)
         github_action.triggered.connect(lambda: webbrowser.open("https://github.com/yusufozcelik/tacosim"))
         help_menu.addAction(github_action)
+    
+    def open_serial_monitor(self):
+        self.serial_window = SerialMonitorWindow(self)
+        self.serial_window.show()
 
     def on_dock_visibility_changed(self, visible):
         if hasattr(self, "show_dock_action"):
@@ -152,6 +166,11 @@ class MainWindow(QMainWindow):
             self.redo_stack.clear()
 
     def add_battery_to_scene(self):
+        existing_batteries = [item for item in self.scene.items() if isinstance(item, GraphicsBattery)]
+        if existing_batteries:
+            QMessageBox.warning(self, "Sınır Aşıldı", "Yalnızca 1 batarya ekleyebilirsiniz.")
+            return
+
         battery = GraphicsBattery(200, 100, self.connection_manager)
         self.scene.addItem(battery)
         self.history_stack.append({"type": "add", "item": battery})
@@ -200,6 +219,7 @@ class MainWindow(QMainWindow):
         if not hasattr(self, "simulation_engine") or not self.simulation_engine:
             return
 
+        print("Simülasyon tekrar başlatılıyor")
         self.simulation_engine.run()
 
         for item in self.scene.items():
@@ -238,6 +258,12 @@ class MainWindow(QMainWindow):
         led = GraphicsLED(100, 100, self.connection_manager)
         self.scene.addItem(led)
         self.history_stack.append({"type": "add", "item": led})
+        self.redo_stack.clear()
+
+    def add_potentiometer_to_scene(self):
+        pot = GraphicsPotentiometer(150, 150, self.connection_manager)
+        self.scene.addItem(pot)
+        self.history_stack.append({"type": "add", "item": pot})
         self.redo_stack.clear()
 
     def undo_last_action(self):
@@ -330,6 +356,8 @@ class MainWindow(QMainWindow):
                 item = GraphicsBattery.from_dict(item_data, self.connection_manager)
             elif item_type == "resistor":
                 item = GraphicsResistor.from_dict(item_data, self.connection_manager)
+            elif item_type == "potentiometer":
+                item = GraphicsPotentiometer.from_dict(item_data, self.connection_manager)
             else:
                 continue
 

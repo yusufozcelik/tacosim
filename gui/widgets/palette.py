@@ -1,7 +1,7 @@
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QPushButton, QColorDialog
 
 class PaletteWidget(QWidget):
-    def __init__(self, on_led_add, on_color_change=None, on_battery_add=None, on_simulate=None, on_resistor_add=None, on_reset=None, on_button_add=None):
+    def __init__(self, on_led_add, on_color_change=None, on_battery_add=None, on_simulate=None, on_resistor_add=None, on_reset=None, on_button_add=None, on_potentiometer_add=None):
         super().__init__()
         self.on_color_change = on_color_change
 
@@ -69,6 +69,11 @@ class PaletteWidget(QWidget):
         self.btn_button = QPushButton("🔘︎ Buton Ekle")
         self.btn_button.setStyleSheet(common_button_style)
         self.btn_button.clicked.connect(on_button_add)
+        layout.addWidget(self.btn_button)
+
+        self.btn_button = QPushButton("Potansiyometre Ekle")
+        self.btn_button.setStyleSheet(common_button_style)
+        self.btn_button.clicked.connect(on_potentiometer_add)
         layout.addWidget(self.btn_button)
 
         layout.addWidget(self.btn_led)

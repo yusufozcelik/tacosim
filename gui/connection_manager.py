@@ -20,7 +20,9 @@ class ConnectionManager:
                 self.cancel_connection()
                 return
 
-            wire = DynamicWire(self.first_pin, pin, self.current_color)
+            bend_points = list(self.temp_wire.bend_points) if self.temp_wire else []
+
+            wire = DynamicWire(self.first_pin, pin, self.current_color, bend_points=bend_points)
             self.scene.addItem(wire)
 
             self.first_pin.connect_to(pin)

@@ -21,8 +21,17 @@ class CustomGraphicsView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
+        scene_pos = self.mapToScene(event.pos())
+
+        if event.button() == Qt.LeftButton and self.scene().connection_manager.temp_wire:
+            item = self.itemAt(event.pos())
+            if item is None or not hasattr(item, "name"):
+                self.scene().connection_manager.temp_wire.add_bend_point(scene_pos)
+                return
+
         if event.button() == Qt.RightButton:
             self.scene().connection_manager.cancel_connection()
+
         super().mousePressEvent(event)
 
     def mouseReleaseEvent(self, event):

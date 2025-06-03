@@ -34,7 +34,7 @@ class GraphicsButton(BaseComponent):
         return self.pins
 
     def get_resistance(self):
-        return 100 if self.closed else 1e6
+        return 0.0 if self.closed else float('inf')
 
     def get_voltage(self):
         return 0.0

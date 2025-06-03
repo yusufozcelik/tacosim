@@ -15,6 +15,7 @@ class GraphicsLED(BaseComponent):
         self.led_color = QColor("red")
         self.voltage = 0.0
         self.current = 0.0
+        self.connection_manager = connection_manager
 
         self.pins = [
             SelectablePin(20, 85, connection_manager, self, name="VCC"),
@@ -34,7 +35,7 @@ class GraphicsLED(BaseComponent):
         painter.setPen(Qt.black)
         painter.drawRoundedRect(QRectF(10, 10, 40, 30), 8, 8)
 
-        # Alt halka (kontur)
+        # Alt halka
         painter.setBrush(QColor(self.led_color))
         painter.drawRoundedRect(QRectF(10, 38, 40, 4), 2, 2)
 
@@ -45,6 +46,12 @@ class GraphicsLED(BaseComponent):
         painter.setBrush(QColor("#808080"))
         painter.drawRect(23, 42, leg_width, vcc_height)  # VCC - uzun
         painter.drawRect(33, 42, leg_width, gnd_height)  # GND - kısa
+
+        # + / - işaretleri
+        painter.setPen(Qt.white)
+        painter.setFont(QFont("Arial", 10, QFont.Bold))
+        painter.drawText(18, 98, "+")
+        painter.drawText(33, 98, "-")
 
     def get_pins(self):
         return self.pins
@@ -60,11 +67,46 @@ class GraphicsLED(BaseComponent):
         self.current = current
         self.update()
 
+    def pins_by_name(self, name):
+        for pin in self.pins:
+            if pin.name == name:
+                return pin
+        return None
+
     def simulate(self, simulation_engine):
         if not simulation_engine.running:
-            self.voltage = 0.0
+            self.setBrush(QColor("gray"))
             self.current = 0.0
-        self.update()
+            self.voltage = 0.0
+            return
+
+        vcc_pin = self.pins_by_name("VCC")
+        gnd_pin = self.pins_by_name("GND")
+
+        vcc_connected = vcc_pin.connected_pin
+        gnd_connected = gnd_pin.connected_pin
+
+        if not vcc_connected or not gnd_connected:
+            self.setBrush(QColor("gray"))
+            return
+
+        if not simulation_engine.is_pin_pair_directional(vcc_connected, gnd_connected):
+            self.setBrush(QColor("gray"))
+            return
+
+        # yön doğruysa çalışmaya devam et
+        voltage = getattr(self, "voltage", 0.0)
+        current = getattr(self, "current", 0.0)
+
+        if voltage == 0.0 or current == 0.0:
+            self.setBrush(QColor("gray"))
+        elif current > 0.05:
+            self.setBrush(QColor("orange"))
+        else:
+            intensity = min(255, max(50, int(current * 4000)))
+            color_with_alpha = QColor(self.led_color)
+            color_with_alpha.setAlpha(intensity)
+            self.setBrush(color_with_alpha)
 
     def contextMenuEvent(self, event):
         menu = QMenu()
