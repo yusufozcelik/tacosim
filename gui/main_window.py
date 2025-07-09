@@ -15,6 +15,7 @@ from gui.simulation_engine import SimulationEngine
 from gui.gui_elements.graphics_button import GraphicsButton
 from gui.windows.serial_monitor import SerialMonitorWindow
 from gui.gui_elements.graphics_potentiometer import GraphicsPotentiometer
+from gui.gui_elements.graphics_arduino_uno import GraphicsArduinoUno
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -91,7 +92,8 @@ class MainWindow(QMainWindow):
             on_simulate=self.simulate_all,
             on_reset=self.reset_scene,
             on_button_add=self.add_button_to_scene,
-            on_potentiometer_add=self.add_potentiometer_to_scene
+            on_potentiometer_add=self.add_potentiometer_to_scene,
+            on_arduino_uno_add=self.add_arduino_uno_to_scene
         )
         self.dock = QDockWidget("Elemanlar")
         self.dock.setWidget(self.palette)
@@ -239,6 +241,12 @@ class MainWindow(QMainWindow):
         self.scene.addItem(resistor)
         self.history_stack.append({"type": "add", "item": resistor})
         self.redo_stack.clear()
+        
+    def add_arduino_uno_to_scene(self):
+        arduino = GraphicsArduinoUno(200, 200, self.connection_manager)
+        self.scene.addItem(arduino)
+        self.history_stack.append({"type": "add", "item": arduino})
+        self.redo_stack.clear()
 
     def reset_scene(self):
         for item in self.scene.items():
@@ -358,6 +366,8 @@ class MainWindow(QMainWindow):
                 item = GraphicsResistor.from_dict(item_data, self.connection_manager)
             elif item_type == "potentiometer":
                 item = GraphicsPotentiometer.from_dict(item_data, self.connection_manager)
+            elif item_type == "arduino_uno":
+                item = GraphicsArduinoUno.from_dict(item_data, self.connection_manager)
             else:
                 continue
 

@@ -26,7 +26,7 @@ class GraphicsLED(BaseComponent):
         painter.setRenderHint(QPainter.Antialiasing)
 
         # Parlaklık ayarı
-        intensity = min(255, max(100, int(self.current * 4000)))
+        intensity = min(255, max(15, int(self.current * 12000)))
         color = QColor(self.led_color)
         color.setAlpha(intensity)
 
@@ -140,3 +140,29 @@ class GraphicsLED(BaseComponent):
         led = GraphicsLED(data["x"], data["y"], connection_manager)
         led.led_color = QColor(data.get("color", "#ff0000"))
         return led
+
+    def receive_voltage(self, voltage, source_pin=None):
+        self.voltage_on_pin[source_pin] = voltage
+        if self.is_on_condition_met():
+            self.is_on = True
+        else:
+            self.is_on = False
+        self.update()
+    
+    def is_on_condition_met(self):
+        vcc = self.voltage_on_pin.get(self.vcc_pin)
+        gnd = self.voltage_on_pin.get(self.gnd_pin)
+        return vcc is not None and gnd is not None and (vcc - gnd) > 1.5
+    
+    def on_pin_change(self, changed_pin):
+        self.voltages = getattr(self, "voltages", {})
+        self.voltages[changed_pin.name] = changed_pin.voltage
+        self.check_power()
+
+    def check_power(self):
+        vcc = self.voltages.get("VCC", 0)
+        gnd = self.voltages.get("GND", 0)
+        diff = vcc - gnd
+        self.current  = 0.02 if diff > 1.5 else 0.0       # 20 mA
+        self.voltage  = diff
+        self.update()

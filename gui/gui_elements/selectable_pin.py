@@ -9,6 +9,9 @@ class SelectablePin(QGraphicsEllipseItem):
         self.connected_pin = None
         self.name = name
 
+        self.connections = []
+        self.voltage = 0.0
+
         if name == "VCC":
             self.default_color = QColor("red")
         elif name == "GND":
@@ -29,6 +32,14 @@ class SelectablePin(QGraphicsEllipseItem):
     def connect_to(self, other_pin):
         self.connected_pin = other_pin
         other_pin.connected_pin = self
+
+        self.other_component = other_pin.parentItem()
+        other_pin.other_component = self.parentItem()
+
+        if other_pin not in self.connections:
+            self.connections.append(other_pin)
+        if self not in other_pin.connections:
+            other_pin.connections.append(self)
 
     def hoverEnterEvent(self, event):
         self.setBrush(QBrush(QColor("cyan")))

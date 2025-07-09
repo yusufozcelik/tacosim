@@ -43,3 +43,19 @@ class ConnectionManager:
             self.scene.removeItem(self.temp_wire)
             self.temp_wire = None
         self.first_pin = None
+
+    def connect(self, pin1, pin2):
+        if not hasattr(pin1, "connections"):
+            pin1.connections = []
+        if not hasattr(pin2, "connections"):
+            pin2.connections = []
+
+        pin1.connections.append(pin2)
+        pin2.connections.append(pin1)
+
+        if hasattr(pin1, "parentItem") and pin1.parentItem():
+            pin2.other_component = pin1.parentItem()
+        if hasattr(pin2, "parentItem") and pin2.parentItem():
+            pin1.other_component = pin2.parentItem()
+
+        print(f"[🔗] Bağlantı kuruldu: {pin1.name} ↔ {pin2.name}")
